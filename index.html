@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>免费多平台发布助手 — 一次填好，8平台复制粘贴发布，不订阅</title>
+<style>
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#eef2f7;color:#111827;line-height:1.6}
+header{background:#111827;color:#fff;padding:18px 20px}
+header h1{margin:0;font-size:21px;color:#fff}
+header p{margin:8px 0 0;color:#dbeafe;font-size:14px}
+main{max-width:900px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid #cbd5e1;border-radius:14px;padding:16px;margin-bottom:14px;color:#111827}
+.card h2{margin:0 0 10px;font-size:17px;color:#111827}
+.card h3{margin:14px 0 8px;font-size:15px;color:#111827}
+label{font-size:14px;color:#111827}
+input[type=text],textarea,select{width:100%;padding:9px 11px;border:1px solid #94a3b8;border-radius:9px;font-size:14px;color:#111827;background:#fff}
+textarea{resize:vertical}
+button{cursor:pointer;border:1px solid #94a3b8;background:#fff;color:#111827;border-radius:9px;padding:8px 12px;font-size:14px}
+button.primary{background:#111827;color:#fff;border-color:#111827}
+button.big{padding:10px 16px;font-size:15px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row>*{flex:1;min-width:180px}
+.plat{border:1px solid #cbd5e1;border-radius:12px;padding:14px;margin-bottom:12px;background:#f8fafc}
+.plat h3{margin:0 0 6px}
+.plat .meta{font-size:13px;color:#475569}
+.plat .out{background:#fff;border:1px solid #cbd5e1;border-radius:9px;padding:10px;font-size:14px;white-space:pre-wrap;word-break:break-word;color:#111827}
+.warn{background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:12px;font-size:14px;color:#111827}
+.ok{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px;font-size:14px;color:#111827}
+.progress{height:12px;background:#e2e8f0;border-radius:999px;overflow:hidden}
+.progress>div{height:100%;background:#111827;width:0%}
+.check{border-top:1px dashed #cbd5e1;margin-top:12px;padding-top:10px}
+.check label{display:block;margin:6px 0;font-size:14px}
+.check input[type=text]{margin-top:4px}
+small{color:#475569}
+</style>
+</head>
+<body>
+<header>
+<h1>免费多平台发布助手</h1>
+<p>不订阅、不把账号交给第三方、不上传你的视频。<br>日常发布只做两件事：上面填一次，下面复制一次，然后去各平台粘贴、自己点发布。</p>
+</header>
+<main>
+
+<div class="card">
+<h2>第 1 步：一次填好</h2>
+<div class="row">
+<label style="flex:2">标题<input id="title" type="text" placeholder="例如：现在的小孩 vs 以前的小孩"></label>
+<label>原创声明（你自己决定）<select id="original"><option value="no">不勾原创 / 不确定</option><option value="yes">这是我原创，我确认可以勾</option></select></label>
+</div>
+<div style="margin-top:10px"><label>描述<textarea id="desc" rows="3" placeholder="视频讲了什么，一两句话"></textarea></label></div>
+<div style="margin-top:10px"><label>话题 / 标签（用逗号或空格分开）<input id="tags" type="text" placeholder="例如：亲子，搞笑，童年"></textarea></label></div>
+<div class="row" style="margin-top:10px">
+<label>视频文件（只在本地预览、看大小和时长，不上传）<input id="videoFile" type="file" accept="video/*"></label>
+<label>封面图片（只在本地预览，不上传）<input id="coverFile" type="file" accept="image/*"></label>
+</div>
+<div id="fileInfo" class="meta" style="font-size:13px;color:#475569;margin-top:8px"></div>
+<div style="margin-top:10px"><img id="coverPreview" style="max-width:220px;display:none;border:1px solid #cbd5e1;border-radius:9px"></div>
+<p><small>保存说明：标题、描述、话题和发布进度会自动存在这个浏览器里，下次打开还在。视频和封面文件本身不保存，每次重新选一下就行。</small></p>
+</div>
+
+<div class="card">
+<h2>极简发布：填一次，复制一次</h2>
+<p style="font-size:14px">下面这段就是通用版，绝大多数平台直接粘贴就能用，不用每个平台单独复制。标题太长、标签太多的平台，下面详细版里会单独提醒你。</p>
+<textarea id="universalText" rows="6" readonly></textarea>
+<div class="row" style="margin-top:10px">
+<button class="primary big" onclick="copyUniversal()">一键复制通用版</button>
+<button onclick="openNext()">打开下一个没发布的平台</button>
+</div>
+<p><small>然后：打开平台 → 粘贴 → 上传视频 → 你自己点发布 → 回来把那个平台改成“已发布”。就这样，没别的步骤。</small></p>
+</div>
+
+<div class="card">
+<h2>详细版（不用每次都看）</h2>
+<div class="progress"><div id="progressBar"></div></div>
+<p id="progressText" style="font-size:14px;color:#475569"></p>
+<div class="row">
+<button class="primary big" onclick="openNext()">按顺序打开下一个没发布的平台</button>
+<button onclick="resetAll()">清空进度</button>
+</div>
+<p><small>顺序就是：小红书 → 抖音 → B站 → 视频号 → YouTube → 快手 → 百家号 → 拼多多。哪个平台不想发，把它前面的勾去掉就行。</small></p>
+<div id="platList"></div>
+</div>
+
+<div class="card">
+<h2>核对：只做一次，不是每次发布都做</h2>
+<div class="ok">这就是你说的能力，也是现在最需要你的地方：<b>你点开一个平台的上传页，对照下面那张核对表，看到什么就勾什么。</b>不用一次核 8 个，先核 1 个，点“导出核对结果”发回给我，我就按你看到的真实页面去改 Skill，改完你再核下一个。</div>
+<p style="font-size:14px">核对表在每个平台卡片下面，点“展开核对表”就能看到。每一项只有三个选项：<b>对得上 / 找不到 / 不一样</b>，不一样就写一句你看到的是什么，比如“最终按钮叫发表，不是发布”。</p>
+<p style="font-size:14px">先从最简单的开始：<b>小红书</b>。你点开它的上传页，看看标题框、描述框、话题、封面、原创勾选、最后那个按钮，分别是什么样子，勾完导出发我就行，其他平台先不用管。</p>
+<div class="row"><button onclick="exportCheck()">导出核对结果（.json）</button><button onclick="exportPack()">导出发布包（.md）</button></div>
+</div>
+
+</main>
+</body>
+</html>
+<script>
+const PLATFORMS = [
+  {id:'xiaohongshu', name:'小红书', url:'https://creator.xiaohongshu.com/publish/publish?source=official&from=menu&target=video', titleMax:20, tagsMax:null, cover:'3:4 竖封面优先', original:true, note:'标题就是正文开头，话题要选真实存在的话题。'},
+  {id:'douyin', name:'抖音', url:'https://creator.douyin.com/creator-micro/content/upload', titleMax:30, tagsMax:5, cover:'3:4 或 4:3', original:false, note:'标题+描述一起填，话题用 #话题 形式。'},
+  {id:'bilibili', name:'B站', url:'https://member.bilibili.com/platform/upload/video/frame', titleMax:80, tagsMax:10, cover:'4:3 或 16:9 首页封面', original:true, note:'标题、简介、标签分开填，自制声明按你的实际情况勾。'},
+  {id:'wechat_channels', name:'微信视频号', url:'https://channels.weixin.qq.com/platform/post/create', titleMax:null, tagsMax:null, cover:'3:4 或 4:3', original:true, note:'描述+话题，原创声明按实际情况勾。'},
+  {id:'youtube', name:'YouTube', url:'https://studio.youtube.com/', titleMax:100, tagsMax:null, cover:'16:9 缩略图', original:false, note:'标题、简介、标签分开填，先设不公开，检查完再改公开。'},
+  {id:'kuaishou', name:'快手', url:'https://cp.kuaishou.com/', titleMax:null, tagsMax:10, cover:'3:4 竖封面优先', original:false, note:'创作者服务平台，左侧找内容发布。最后按钮可能是“发布”或“上传”。'},
+  {id:'baijiahao', name:'百家号', url:'https://baijiahao.baidu.com/', titleMax:40, tagsMax:10, cover:'16:9，至少 660×370', original:true, note:'标题 8 到 40 字，标签每个不超过 10 个字，最多 10 个。'},
+  {id:'pinduoduo', name:'拼多多', url:'https://mms.pinduoduo.com/', titleMax:null, tagsMax:null, cover:'3:4 竖视频', original:false, note:'电脑走商家创作者平台；手机直接在多多视频 App 里粘贴标题和描述发布，不用走电脑版。'},
+];
+const CHECK_ITEMS = [
+  {id:'title', label:'标题框：能找到、能粘贴标题吗？'},
+  {id:'desc', label:'描述 / 简介框：能找到、能粘贴描述吗？'},
+  {id:'tags', label:'话题 / 标签：怎么加？是打 # 还是选标签？'},
+  {id:'cover', label:'封面上传：能找到、能上传你准备的封面吗？'},
+  {id:'original', label:'原创 / 自制勾选：有没有这个勾选框？'},
+  {id:'final', label:'最后的按钮：按钮上写的是什么字？（发布 / 上传 / 发表 / 保存草稿）'},
+  {id:'other', label:'其他必填项：有没有页面强制你填、上面没列出的东西？'},
+];
+const LS_KEY = 'free-publish-assistant-v1';
+let data = {title:'', desc:'', tags:'', original:'no', selected:{}, status:{}, check:{}, checkNote:{}};
+try { const saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); data = Object.assign(data, saved); } catch(e) {}
+PLATFORMS.forEach(p => { if (data.selected[p.id] === undefined) data.selected[p.id] = true; if (!data.status[p.id]) data.status[p.id] = '未开始'; if (!data.check[p.id]) data.check[p.id] = {}; });
+function save(){ try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch(e) {} }
+function esc(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function parseTags(){ return data.tags.split(/[,，、\s]+/).map(s => s.trim()).filter(Boolean); }
+function cpLen(s){ return Array.from(s || '').length; }
+function platformVersion(p){
+  let title = data.title || '';
+  let warn = [];
+  if (p.titleMax && cpLen(title) > p.titleMax) { warn.push('标题超了 ' + p.titleMax + ' 字，已截断，原文请自己缩短后重填'); title = Array.from(title).slice(0, p.titleMax).join(''); }
+  let tags = parseTags();
+  if (p.tagsMax && tags.length > p.tagsMax) { warn.push('标签超了 ' + p.tagsMax + ' 个，只保留前 ' + p.tagsMax + ' 个'); tags = tags.slice(0, p.tagsMax); }
+  let desc = data.desc || '';
+  let descWithTags = desc;
+  if (tags.length) descWithTags = (desc ? desc + '\n' : '') + tags.map(t => '#' + t).join(' ');
+  let orig = '';
+  if (p.original) orig = data.original === 'yes' ? '原创：你已确认原创，可以勾选。' : '原创：你选了不确定，页面上不要勾原创，等你确认后再勾。';
+  return {title, tags, descWithTags, warn, orig};
+}
+function render(){
+  document.getElementById('title').value = data.title;
+  document.getElementById('desc').value = data.desc;
+  document.getElementById('tags').value = data.tags;
+  document.getElementById('original').value = data.original;
+  const sel = PLATFORMS.filter(p => data.selected[p.id]);
+  const done = sel.filter(p => data.status[p.id] === '已发布').length;
+  document.getElementById('progressBar').style.width = (sel.length ? Math.round(done / sel.length * 100) : 0) + '%';
+  document.getElementById('progressText').textContent = '已发布 ' + done + ' / ' + sel.length + ' 个选中平台';
+  const uni = document.getElementById('universalText');
+  if (uni) uni.value = (data.title || '') + '\n\n' + (data.desc || '') + (parseTags().length ? '\n' + parseTags().map(t => '#' + t).join(' ') : '');
+  document.getElementById('platList').innerHTML = PLATFORMS.map(p => {
+    const v = platformVersion(p);
+    const checked = data.check[p.id] || {};
+    return '<div class="plat">'
+      + '<div class="row"><label style="flex:0 0 auto"><input type="checkbox" ' + (data.selected[p.id] ? 'checked' : '') + ' onchange="toggleSel(\'' + p.id + '\',this.checked)"> 发这个平台</label><h3 style="flex:1">' + p.name + '</h3>'
+      + '<select onchange="setStatus(\'' + p.id + '\',this.value)">' + ['未开始','已打开','草稿已填','已发布'].map(s => '<option ' + (data.status[p.id] === s ? 'selected' : '') + '>' + s + '</option>').join('') + '</select></div>'
+      + '<div class="meta">' + p.note + '　封面要求：' + p.cover + '</div>'
+      + (v.warn.length ? '<div class="warn">' + v.warn.join('<br>') + '</div>' : '')
+      + '<h3>这个平台用的标题</h3><div class="out">' + esc(v.title || '(还没填标题)') + '</div><button onclick="copyText(\'' + p.id + '\',\'title\')">复制标题</button> '
+      + '<h3>这个平台用的描述 + 话题</h3><div class="out">' + esc(v.descWithTags || '(还没填描述)') + '</div><button onclick="copyText(\'' + p.id + '\',\'desc\')">复制描述+话题</button> '
+      + '<h3>标签</h3><div class="out">' + esc(v.tags.join('，') || '(没有话题)') + '</div><button onclick="copyText(\'' + p.id + '\',\'tags\')">复制标签</button>'
+      + (v.orig ? '<div class="meta" style="margin-top:8px">' + v.orig + '</div>' : '')
+      + '<div class="row" style="margin-top:10px"><button class="primary" onclick="openPlat(\'' + p.id + '\')">打开' + p.name + '上传页</button></div>'
+      + '<div class="check"><details><summary style="cursor:pointer;font-weight:bold">展开核对表：点开' + p.name + '后，看到什么勾什么</summary>'
+      + CHECK_ITEMS.map(it => '<label>' + it.label + '<select onchange="setCheck(\'' + p.id + '\',\'' + it.id + '\',this.value)"><option value="">还没看</option><option ' + (checked[it.id] === '对得上' ? 'selected' : '') + '>对得上</option><option ' + (checked[it.id] === '找不到' ? 'selected' : '') + '>找不到</option><option ' + (checked[it.id] === '不一样' ? 'selected' : '') + '>不一样</option></select></label>').join('')
+      + '<label>你看到的不一样的地方 / 最后按钮原话<input type="text" value="' + esc((data.checkNote[p.id] || '')) + '" placeholder="例如：最后按钮写的是发表" onchange="setCheckNote(\'' + p.id + '\',this.value)"></label>'
+      + '</details></div></div>';
+  }).join('');
+}
+function toggleSel(id, v){ data.selected[id] = v; save(); render(); }
+function setStatus(id, v){ data.status[id] = v; save(); render(); }
+function setCheck(pid, item, v){ data.check[pid][item] = v; save(); }
+function setCheckNote(pid, v){ data.checkNote[pid] = v; save(); }
+function openPlat(id){ const p = PLATFORMS.find(x => x.id === id); window.open(p.url, '_blank'); if (data.status[id] === '未开始') { data.status[id] = '已打开'; save(); render(); } }
+function openNext(){ const p = PLATFORMS.find(x => data.selected[x.id] && data.status[x.id] !== '已发布'); if (!p) { alert('选中的平台都已发布了'); return; } openPlat(p.id); }
+async function copyUniversal(){
+  const text = document.getElementById('universalText').value;
+  try { await navigator.clipboard.writeText(text); alert('已复制，去平台页面粘贴就行'); }
+  catch(e) { const ta = document.getElementById('universalText'); ta.select(); document.execCommand('copy'); alert('已复制，去平台页面粘贴就行'); }
+}
+async function copyText(pid, kind){
+  const p = PLATFORMS.find(x => x.id === pid); const v = platformVersion(p);
+  const text = kind === 'title' ? v.title : kind === 'desc' ? v.descWithTags : v.tags.join('，');
+  try { await navigator.clipboard.writeText(text); alert('已复制，去平台页面粘贴就行'); }
+  catch(e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('已复制，去平台页面粘贴就行'); }
+}
+function download(name, content, type){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type})); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function exportPack(){
+  let out = '# 发布包\n\n标题：' + data.title + '\n\n描述：' + data.desc + '\n\n话题：' + parseTags().join('，') + '\n\n原创：' + (data.original === 'yes' ? '已确认原创' : '不确定，不勾原创') + '\n\n';
+  PLATFORMS.filter(p => data.selected[p.id]).forEach(p => { const v = platformVersion(p); out += '## ' + p.name + '（' + p.url + '）\n标题：' + v.title + '\n描述+话题：\n' + v.descWithTags + '\n标签：' + v.tags.join('，') + '\n封面：' + p.cover + '\n状态：' + data.status[p.id] + '\n\n'; });
+  download('发布包.md', out, 'text/markdown');
+}
+function exportCheck(){ download('核对结果.json', JSON.stringify({title:data.title, desc:data.desc, tags:data.tags, platforms: PLATFORMS.map(p => ({id:p.id, name:p.name, status:data.status[p.id], check:data.check[p.id], note:data.checkNote[p.id] || ''}))}, null, 2), 'application/json'); }
+function resetAll(){ if (!confirm('确定清空发布进度和核对结果吗？标题这些不清空。')) return; PLATFORMS.forEach(p => { data.status[p.id] = '未开始'; data.check[p.id] = {}; data.checkNote[p.id] = ''; }); save(); render(); }
+document.getElementById('title').addEventListener('input', e => { data.title = e.target.value; save(); render(); });
+document.getElementById('desc').addEventListener('input', e => { data.desc = e.target.value; save(); render(); });
+document.getElementById('tags').addEventListener('input', e => { data.tags = e.target.value; save(); render(); });
+document.getElementById('original').addEventListener('change', e => { data.original = e.target.value; save(); render(); });
+document.getElementById('videoFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const v = document.createElement('video'); v.preload = 'metadata'; v.onloadedmetadata = () => { document.getElementById('fileInfo').textContent = '视频：' + f.name + '，约 ' + (f.size / 1048576).toFixed(1) + ' MB，时长约 ' + Math.round(v.duration) + ' 秒' + (v.videoWidth ? '，' + v.videoWidth + '×' + v.videoHeight : ''); URL.revokeObjectURL(v.src); };
+  v.src = URL.createObjectURL(f);
+});
+document.getElementById('coverFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const img = document.getElementById('coverPreview'); img.src = URL.createObjectURL(f); img.style.display = 'block';
+  const im = new Image(); im.onload = () => { document.getElementById('fileInfo').textContent += '　封面：' + im.width + '×' + im.height; }; im.src = img.src;
+});
+render();
+</script>
+</body>
+</html>
